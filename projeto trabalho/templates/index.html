@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magic Background Remover</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .dropzone {
+            border: 2px dashed #9CA3AF;
+            transition: all 0.3s ease;
+        }
+        .dropzone.active {
+            border-color: #3B82F6;
+            background-color: #EFF6FF;
+        }
+        .image-preview {
+            transition: all 0.3s ease;
+            max-height: 0;
+            opacity: 0;
+        }
+        .image-preview.show {
+            max-height: 500px;
+            opacity: 1;
+        }
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .result-container {
+            transition: all 0.5s ease;
+            max-height: 0;
+            opacity: 0;
+        }
+        .result-container.show {
+            max-height: 1000px;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-12">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-magic text-blue-500 mr-2"></i> Magic Background Remover
+            </h1>
+            <p class="text-gray-600 max-w-2xl mx-auto">
+                Remova o fundo de suas imagens com um clique. Simples, rápido e sem complicações.
+            </p>
+        </header>
+
+        <main class="max-w-3xl mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6">
+            <div id="upload-section" class="mb-8">
+                <div id="dropzone" class="dropzone rounded-lg p-8 text-center cursor-pointer">
+                    <div class="flex flex-col items-center justify-center space-y-4">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-blue-500"></i>
+                        <h2 class="text-xl font-semibold text-gray-700">Arraste e solte suas imagens aqui</h2>
+                        <p class="text-gray-500">ou</p>
+                        <label for="file-input" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition cursor-pointer">
+                            Selecione do computador
+                        </label>
+                        <input id="file-input" type="file" accept="image/*" multiple class="hidden">
+                        <p class="text-sm text-gray-500 mt-2">Formatos suportados: JPG, PNG, WEBP (até 5MB)</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="preview-section" class="image-preview mb-8 overflow-hidden">
+                <h3 class="text-lg font-medium text-gray-700 mb-4">Pré-visualização</h3>
+                <div class="flex flex-col md:flex-row gap-6">
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-500 mb-2">Original</p>
+                        <div class="border rounded-lg overflow-hidden">
+                            <img id="original-image" src="" alt="Original image" class="w-full h-auto max-h-80 object-contain mx-auto">
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-500 mb-2">Resultado</p>
+                        <div id="result-placeholder" class="border rounded-lg bg-gray-100 flex items-center justify-center h-80">
+                            <p class="text-gray-500">A imagem processada aparecerá aqui</p>
+                        </div>
+                        <img id="result-image" src="" alt="Processed image" class="w-full h-auto max-h-80 object-contain mx-auto hidden">
+                    </div>
+                </div>
+            </div>
+
+            <div id="processing-section" class="hidden mb-8">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-center">
+                    <div class="spinner text-blue-500 mr-3">
+                        <i class="fas fa-circle-notch text-2xl"></i>
+                    </div>
+                    <p class="text-blue-800 font-medium">Processando suas imagens... Isso pode levar alguns segundos.</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <button id="process-btn" class="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-medium hidden">
+                    <i class="fas fa-magic mr-2"></i> Remover Fundo
+                </button>
+                <button id="download-btn" class="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-medium hidden">
+                    <i class="fas fa-download mr-2"></i> Baixar Imagem
+                </button>
+                <button id="reset-btn" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium hidden">
+                    <i class="fas fa-redo mr-2"></i> Nova Imagem
+                </button>
+            </div>
+
+            <div id="result-container" class="result-container mt-8 bg-gray-50 rounded-lg p-4 hidden">
+                <h3 class="text-lg font-medium text-gray-700 mb-3">Pronto! O que você gostaria de fazer agora?</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <button class="flex items-center justify-center p-4 bg-white border rounded-lg hover:bg-gray-100 transition">
+                        <i class="fas fa-copy text-blue-500 mr-2"></i> Copiar para área de transferência
+                    </button>
+                    <button class="flex items-center justify-center p-4 bg-white border rounded-lg hover:bg-gray-100 transition">
+                        <i class="fas fa-share-alt text-green-500 mr-2"></i> Compartilhar
+                    </button>
+                    <button class="flex items-center justify-center p-4 bg-white border rounded-lg hover:bg-gray-100 transition">
+                        <i class="fas fa-edit text-purple-500 mr-2"></i> Editar imagem
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <footer class="mt-16 text-center text-gray-500 text-sm">
+            <p>© 2025 Magic Background Remover. Todos os direitos reservados.</p>
+            <p class="mt-2">Desenvolvido com <i class="fas fa-heart text-red-500"></i> para facilitar sua vida</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const dropzone = document.getElementById('dropzone');
+            const fileInput = document.getElementById('file-input');
+            const originalImage = document.getElementById('original-image');
+            const resultImage = document.getElementById('result-image');
+            const resultPlaceholder = document.getElementById('result-placeholder');
+            const processBtn = document.getElementById('process-btn');
+            const downloadBtn = document.getElementById('download-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const previewSection = document.getElementById('preview-section');
+            const processingSection = document.getElementById('processing-section');
+            const resultContainer = document.getElementById('result-container');
+
+            dropzone.addEventListener('click', () => fileInput.click());
+
+            fileInput.addEventListener('change', handleFileSelect);
+
+            dropzone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropzone.classList.add('active');
+            });
+
+            dropzone.addEventListener('dragleave', () => {
+                dropzone.classList.remove('active');
+            });
+
+            dropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('active');
+
+                if (e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    handleFileSelect({ target: fileInput });
+                }
+            });
+
+            processBtn.addEventListener('click', processImage);
+            downloadBtn.addEventListener('click', () => {}); // já baixa automaticamente
+            resetBtn.addEventListener('click', resetApp);
+
+            function handleFileSelect(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                if (!file.type.match('image.*')) {
+                    alert('Por favor, selecione um arquivo de imagem válido.');
+                    return;
+                }
+
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('O arquivo é muito grande. O tamanho máximo permitido é 5MB.');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    originalImage.src = e.target.result;
+                    previewSection.classList.add('show');
+                    processBtn.classList.remove('hidden');
+                    resetBtn.classList.remove('hidden');
+                    resultImage.classList.add('hidden');
+                    resultPlaceholder.classList.remove('hidden');
+                    downloadBtn.classList.add('hidden');
+                    resultContainer.classList.remove('show');
+                };
+                reader.readAsDataURL(file);
+            }
+
+            async function processImage() {
+                const files = fileInput.files;
+                if (!files.length) return;
+
+                processBtn.classList.add('hidden');
+                processingSection.classList.remove('hidden');
+
+                const formData = new FormData();
+                for (let file of files) {
+                    formData.append('images', file);
+                }
+
+                try {
+                    const response = await fetch('/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Erro ao enviar imagens para o servidor.');
+                    }
+
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'imagens_sem_fundo.zip';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+
+                    resultContainer.classList.add('show');
+                    downloadBtn.classList.remove('hidden');
+                    resetBtn.classList.remove('hidden');
+                    processingSection.classList.add('hidden');
+                } catch (error) {
+                    alert('Erro: ' + error.message);
+                    processingSection.classList.add('hidden');
+                    processBtn.classList.remove('hidden');
+                }
+            }
+
+            function resetApp() {
+                fileInput.value = '';
+                originalImage.src = '';
+                resultImage.src = '';
+                resultImage.classList.add('hidden');
+                resultPlaceholder.classList.remove('hidden');
+                previewSection.classList.remove('show');
+                processBtn.classList.add('hidden');
+                downloadBtn.classList.add('hidden');
+                resetBtn.classList.add('hidden');
+                resultContainer.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>
